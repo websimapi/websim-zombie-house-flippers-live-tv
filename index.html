@@ -378,43 +378,43 @@
             }
 
             async createImagePrompt(scriptLine) {
-                const basePrompt = `Zombie House Flippers TV show scene: ${scriptLine.scene}. `;
+                const basePrompt = `Zombie House Flippers TV show scene: ${scriptLine.scene}. A comedic horror TV show style, professional contractors who happen to be undead zombies, with visible but not grotesque decay (e.g., green-tinged skin, stitches).`;
                 
                 let contextualPrompt = basePrompt;
                 
                 switch(scriptLine.scene) {
                     case "exterior_victorian_house":
-                        contextualPrompt += "Creepy old Victorian mansion with peeling paint, broken windows, overgrown yard, three zombie contractors in hard hats and tool belts standing in front, comedy TV show style";
+                        contextualPrompt += " A comedic TV show scene. Three professional zombie contractors, with endearing signs of decay like stitched limbs and dull green skin, stand proudly in front of a creepy Victorian mansion they are about to flip. They wear hard hats and tool belts. The house is dilapidated. The style is bright and funny, not scary.";
                         break;
                     case "zombie_jerry_examining_foundation":
-                        contextualPrompt += "Zombie contractor with hard hat crouched down examining cracked foundation stones, visible decay on zombie but professional work clothes, comedy TV show lighting";
+                        contextualPrompt += " Close-up on Zombie Jerry, a dedicated zombie worker. He's crouched down, examining the cracked foundation of a house. He has greenish skin, a thoughtful but vacant stare, and is wearing professional work clothes and a hard hat. A comedic TV show scene.";
                         break;
                     case "zombie_sandra_with_chainsaw":
-                        contextualPrompt += "Female zombie contractor holding chainsaw, confident pose, construction gear, slightly decomposed but determined expression, inside old house";
+                        contextualPrompt += " Zombie Sandra, a competent female zombie worker, poses confidently with a chainsaw inside a dilapidated house. She has her hair in a messy bun, some tasteful stitches on her cheek, and wears practical construction gear. She looks determined. Comedic and bright TV show lighting.";
                         break;
                     case "zombie_mike_clearing_cobwebs":
-                        contextualPrompt += "Male zombie contractor with tool belt clearing massive cobwebs from ceiling, dust particles in air, old Victorian interior, comedy TV show style";
+                        contextualPrompt += " Zombie Mike, another zombie worker, cheerfully clears away massive, thick cobwebs from a ceiling with a broom. He's a zombie wearing a tool belt, focused on his task despite his undead appearance. Old Victorian interior, comedy TV show style.";
                         break;
                     case "zombies_working_on_house":
-                        contextualPrompt += "Three zombie contractors working together on house renovation, hammering, sawing, measuring, professional construction work, comedy TV show scene";
+                        contextualPrompt += " The three zombie worker friends (Jerry, Sandra, Mike) collaborate on renovating the house. One is hammering, one is sawing, one is measuring. They are clumsy but effective zombie contractors. Comedic TV show scene.";
                         break;
                     case "mysterious_door_closing":
-                        contextualPrompt += "Old wooden door mysteriously closing by itself, zombie contractor looking confused in background, spooky atmosphere but comedy TV show style";
+                        contextualPrompt += " An old wooden door slams shut on its own. In the background, a zombie worker with a confused expression, head tilted, pauses his work to look at it. Spooky but funny, bright TV show lighting.";
                         break;
                     case "replacing_floorboards":
-                        contextualPrompt += "Zombie contractors replacing rotten wooden floorboards, tools scattered around, old Victorian house interior, professional renovation work";
+                        contextualPrompt += " Two zombie workers are prying up old, rotten floorboards. They are focused and professional, despite being decaying zombies. Tools are scattered around them in an old Victorian house interior.";
                         break;
                     case "angry_ghost_appearing":
-                        contextualPrompt += "Translucent angry ghost materializing in old Victorian house, zombie contractors looking surprised but not scared, comedy horror TV show style";
+                        contextualPrompt += " A translucent, classic-looking angry ghost materializes in the house, looking furious. The zombie workers look up from their work, more surprised and annoyed than scared. A meeting of the undead. Comedy horror TV show style.";
                         break;
                     case "zombie_mike_talking_to_ghost":
-                        contextualPrompt += "Zombie contractor in hard hat having casual conversation with floating ghost, both gesturing, comedy TV show scene, house renovation in background";
+                        contextualPrompt += " Zombie Mike, a zombie contractor in a hard hat, has a casual, slightly annoyed conversation with the angry floating ghost. He gestures as if explaining a work-related problem. The ghost looks indignant. A hilarious undead confrontation.";
                         break;
                     case "cliffhanger_scene":
-                        contextualPrompt += "Dramatic wide shot of haunted Victorian house with zombie contractors and ghost visible through windows, suspenseful but comedic TV show ending";
+                        contextualPrompt += " Dramatic wide shot of the haunted Victorian house. The zombie contractors and the ghost are visible through the windows, in a comical standoff. A suspenseful but funny final shot for the episode.";
                         break;
                     default:
-                        contextualPrompt += "Zombie house flippers TV show scene, comedy horror style, professional contractors who happen to be undead";
+                        contextualPrompt += " A general scene from the show, featuring zombie contractors at work.";
                 }
 
                 return contextualPrompt;
@@ -573,4 +573,3 @@
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
-
