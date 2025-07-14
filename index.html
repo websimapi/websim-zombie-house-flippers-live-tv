@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie House Flippers - Live TV</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .tv-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tv-screen {
+            position: relative;
+            width: 95vw;
+            height: 90vh;
+            background: #000;
+            border: 15px solid #333;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 30px rgba(0,0,0,0.8),
+                inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .tv-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,255,0,0.03) 2px,
+                rgba(0,255,0,0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .screen-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .show-header {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            border-bottom: 5px solid #333;
+            position: relative;
+            z-index: 10;
+        }
+
+        .episode-info {
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            position: relative;
+            z-index: 10;
+        }
+
+        .live-indicator {
+            background: #ff0000;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .main-display {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .loading-slide {
+            background: #111;
+            color: #00ff00;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .loading-spinner {
+            border: 4px solid #333;
+            border-top: 4px solid #00ff00;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .script-display {
+            background: rgba(0,0,0,0.9);
+            color: #00ff00;
+            padding: 15px;
+            font-size: 1.1em;
+            height: 120px;
+            overflow-y: auto;
+            border-top: 2px solid #333;
+            position: relative;
+            z-index: 10;
+        }
+
+        .script-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .script-display::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .script-display::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="tv-container">
+        <div class="tv-screen">
+            <div class="screen-content">
+                <div class="show-header">
+                    🧟‍♂️ ZOMBIE HOUSE FLIPPERS 🏠
+                </div>
+                
+                <div class="episode-info">
+                    <span id="episode-title">Episode 1: "The Haunted Victorian"</span>
+                    <span class="live-indicator">● LIVE</span>
+                </div>
+
+                <div class="main-display">
+                    <div class="slide active loading-slide">
+                        <div class="loading-spinner"></div>
+                        <div>Generating first frame...</div>
+                    </div>
+                </div>
+
+                <div class="script-display" id="script-display">
+                    <div><strong>NARRATOR:</strong> Welcome to Zombie House Flippers! Today our undead heroes tackle a creepy Victorian mansion...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div>Status: <span id="status">Initializing...</span></div>
+            <div>Scene: <span id="scene-counter">1</span></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="togglePause()">⏸️ Pause</button>
+            <button class="control-btn" onclick="skipScene()">⏭️ Skip</button>
+            <button class="control-btn" onclick="restartEpisode()">🔄 Restart</button>
+        </div>
+    </div>
+
+    <script>
+        class ZombieHouseFlippersShow {
+            constructor() {
+                this.currentScene = 0;
+                this.isPaused = false;
+                this.slides = [];
+                this.scriptLines = [];
+                this.currentEpisode = 1;
+                this.sceneImages = [];
+                this.conversationHistory = [];
+                
+                this.initializeScript();
+                this.startShow();
+            }
+
+            initializeScript() {
+                this.scriptLines = [
+                    {
+                        speaker: "NARRATOR",
+                        text: "Welcome to Zombie House Flippers! Today our undead heroes tackle a creepy Victorian mansion that's been abandoned for decades.",
+                        scene: "exterior_victorian_house"
+                    },
+                    {
+                        speaker: "ZOMBIE JERRY",
+                        text: "GRAAAHHH... *adjusts hard hat* This place needs serious work. The foundation is more rotten than my left arm!",
+                        scene: "zombie_jerry_examining_foundation"
+                    },
+                    {
+                        speaker: "ZOMBIE SANDRA",
+                        text: "Don't worry Jerry, we've flipped worse. Remember that haunted castle last month? *chainsaw revs*",
+                        scene: "zombie_sandra_with_chainsaw"
+                    },
+                    {
+                        speaker: "ZOMBIE MIKE",
+                        text: "First things first - we need to clear out these cobwebs. Good thing spiders don't bother the undead! *laughs zombily*",
+                        scene: "zombie_mike_clearing_cobwebs"
+                    },
+                    {
+                        speaker: "NARRATOR",
+                        text: "Our zombie crew gets to work, but little do they know this house has some very much alive surprises waiting for them...",
+                        scene: "zombies_working_on_house"
+                    },
+                    {
+                        speaker: "ZOMBIE JERRY",
+                        text: "Wait... did that door just close by itself? *tilts decomposing head* That's weird, even for us.",
+                        scene: "mysterious_door_closing"
+                    },
+                    {
+                        speaker: "ZOMBIE SANDRA",
+                        text: "Probably just the wind, Jerry. Now help me with these rotten floorboards. They're almost as old as we are!",
+                        scene: "replacing_floorboards"
+                    },
+                    {
+                        speaker: "GHOST RESIDENT",
+                        text: "WHO DARES DISTURB MY ETERNAL REST?! *spooky voice echoes*",
+                        scene: "angry_ghost_appearing"
+                    },
+                    {
+                        speaker: "ZOMBIE MIKE",
+                        text: "Oh great, a ghost. Just what we needed. Listen buddy, we're trying to increase your property value here!",
+                        scene: "zombie_mike_talking_to_ghost"
+                    },
+                    {
+                        speaker: "NARRATOR",
+                        text: "Will our zombie heroes be able to flip this haunted house? Find out after these messages!",
+                        scene: "cliffhanger_scene"
+                    }
+                ];
+            }
+
+            async startShow() {
+                this.updateStatus("Starting show...");
+                await this.generateNextFrame();
+                this.scheduleNextFrame();
+            }
+
+            async generateNextFrame() {
+                if (this.currentScene >= this.scriptLines.length) {
+                    this.currentScene = 0; // Loop back to start
+                    this.currentEpisode++;
+                    document.getElementById('episode-title').textContent = `Episode ${this.currentEpisode}: "The Haunted Victorian"`;
+                }
+
+                const currentScript = this.scriptLines[this.currentScene];
+                this.updateStatus("Generating frame...");
+                this.updateScriptDisplay(currentScript);
+
+                try {
+                    // Generate image based on script and scene
+                    const imagePrompt = await this.createImagePrompt(currentScript);
+                    const result = await websim.imageGen({
+                        prompt: imagePrompt,
+                        aspect_ratio: "16:9"
+                    });
+
+                    // Store the generated image
+                    this.sceneImages[this.currentScene] = result.url;
+
+                    // Create new slide
+                    await this.createSlide(result.url);
+
+                    // Analyze the generated image to determine next scene progression
+                    await this.analyzeSceneProgression(result.url, currentScript);
+
+                    this.currentScene++;
+                    document.getElementById('scene-counter').textContent = this.currentScene;
+
+                } catch (error) {
+                    console.error('Error generating frame:', error);
+                    this.updateStatus("Error generating frame, retrying...");
+                    setTimeout(() => this.generateNextFrame(), 2000);
+                }
+            }
+
+            async createImagePrompt(scriptLine) {
+                const basePrompt = `Zombie House Flippers TV show scene: ${scriptLine.scene}. `;
+                
+                let contextualPrompt = basePrompt;
+                
+                switch(scriptLine.scene) {
+                    case "exterior_victorian_house":
+                        contextualPrompt += "Creepy old Victorian mansion with peeling paint, broken windows, overgrown yard, three zombie contractors in hard hats and tool belts standing in front, comedy TV show style";
+                        break;
+                    case "zombie_jerry_examining_foundation":
+                        contextualPrompt += "Zombie contractor with hard hat crouched down examining cracked foundation stones, visible decay on zombie but professional work clothes, comedy TV show lighting";
+                        break;
+                    case "zombie_sandra_with_chainsaw":
+                        contextualPrompt += "Female zombie contractor holding chainsaw, confident pose, construction gear, slightly decomposed but determined expression, inside old house";
+                        break;
+                    case "zombie_mike_clearing_cobwebs":
+                        contextualPrompt += "Male zombie contractor with tool belt clearing massive cobwebs from ceiling, dust particles in air, old Victorian interior, comedy TV show style";
+                        break;
+                    case "zombies_working_on_house":
+                        contextualPrompt += "Three zombie contractors working together on house renovation, hammering, sawing, measuring, professional construction work, comedy TV show scene";
+                        break;
+                    case "mysterious_door_closing":
+                        contextualPrompt += "Old wooden door mysteriously closing by itself, zombie contractor looking confused in background, spooky atmosphere but comedy TV show style";
+                        break;
+                    case "replacing_floorboards":
+                        contextualPrompt += "Zombie contractors replacing rotten wooden floorboards, tools scattered around, old Victorian house interior, professional renovation work";
+                        break;
+                    case "angry_ghost_appearing":
+                        contextualPrompt += "Translucent angry ghost materializing in old Victorian house, zombie contractors looking surprised but not scared, comedy horror TV show style";
+                        break;
+                    case "zombie_mike_talking_to_ghost":
+                        contextualPrompt += "Zombie contractor in hard hat having casual conversation with floating ghost, both gesturing, comedy TV show scene, house renovation in background";
+                        break;
+                    case "cliffhanger_scene":
+                        contextualPrompt += "Dramatic wide shot of haunted Victorian house with zombie contractors and ghost visible through windows, suspenseful but comedic TV show ending";
+                        break;
+                    default:
+                        contextualPrompt += "Zombie house flippers TV show scene, comedy horror style, professional contractors who happen to be undead";
+                }
+
+                return contextualPrompt;
+            }
+
+            async analyzeSceneProgression(imageUrl, currentScript) {
+                try {
+                    const completion = await websim.chat.completions.create({
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are analyzing frames from the TV show 'Zombie House Flippers'. Based on the current image and script, determine how well the story is progressing and suggest any adjustments for the next scene."
+                            },
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: `Current script line: "${currentScript.speaker}: ${currentScript.text}"\n\nAnalyze this frame and suggest how the story should progress. Respond with a brief analysis of what's happening in the scene.`
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: { url: imageUrl }
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+
+                    console.log("Scene Analysis:", completion.content);
+                    this.updateStatus("Scene analyzed successfully");
+                    
+                } catch (error) {
+                    console.error("Error analyzing scene:", error);
+                    this.updateStatus("Analysis failed, continuing...");
+                }
+            }
+
+            async createSlide(imageUrl) {
+                const mainDisplay = document.querySelector('.main-display');
+                
+                // Create new slide
+                const newSlide = document.createElement('div');
+                newSlide.className = 'slide';
+                
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = `Scene ${this.currentScene + 1}`;
+                
+                newSlide.appendChild(img);
+                mainDisplay.appendChild(newSlide);
+
+                // Wait for image to load
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+
+                // Fade transition
+                setTimeout(() => {
+                    // Hide current active slide
+                    const currentActive = document.querySelector('.slide.active');
+                    if (currentActive) {
+                        currentActive.classList.remove('active');
+                    }
+                    
+                    // Show new slide
+                    newSlide.classList.add('active');
+                    
+                    // Clean up old slides (keep only last 3)
+                    const allSlides = document.querySelectorAll('.slide');
+                    if (allSlides.length > 3) {
+                        allSlides[0].remove();
+                    }
+                }, 100);
+            }
+
+            updateScriptDisplay(scriptLine) {
+                const display = document.getElementById('script-display');
+                display.innerHTML = `<div><strong>${scriptLine.speaker}:</strong> ${scriptLine.text}</div>`;
+                display.scrollTop = display.scrollHeight;
+            }
+
+            updateStatus(status) {
+                document.getElementById('status').textContent = status;
+            }
+
+            scheduleNextFrame() {
+                if (!this.isPaused) {
+                    // Wait 8 seconds before generating next frame
+                    setTimeout(() => {
+                        this.generateNextFrame();
+                        this.scheduleNextFrame();
+                    }, 8000);
+                }
+            }
+
+            pause() {
+                this.isPaused = true;
+                this.updateStatus("Paused");
+            }
+
+            resume() {
+                this.isPaused = false;
+                this.updateStatus("Resumed");
+                this.scheduleNextFrame();
+            }
+
+            skipScene() {
+                this.currentScene++;
+                this.generateNextFrame();
+            }
+
+            restart() {
+                this.currentScene = 0;
+                this.currentEpisode = 1;
+                document.getElementById('episode-title').textContent = `Episode 1: "The Haunted Victorian"`;
+                this.generateNextFrame();
+            }
+        }
+
+        // Initialize the show
+        let show;
+        window.addEventListener('load', () => {
+            show = new ZombieHouseFlippersShow();
+        });
+
+        // Control functions
+        function togglePause() {
+            if (show.isPaused) {
+                show.resume();
+                document.querySelector('.control-btn').textContent = '⏸️ Pause';
+            } else {
+                show.pause();
+                document.querySelector('.control-btn').textContent = '▶️ Play';
+            }
+        }
+
+        function skipScene() {
+            show.skipScene();
+        }
+
+        function restartEpisode() {
+            show.restart();
+        }
+
+        // Add some TV static effect on load
+        window.addEventListener('load', () => {
+            const tvScreen = document.querySelector('.tv-screen');
+            tvScreen.style.animation = 'none';
+            setTimeout(() => {
+                tvScreen.style.animation = '';
+            }, 1000);
+        });
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
