@@ -313,15 +313,14 @@
                 this.scriptLines = [];
                 this.currentEpisode = 1;
                 this.sceneImages = [];
-                this.conversationHistory = [];
                 this.currentAudio = null;
                 this.nextFrameTimeout = null;
                 this.voices = {
-                    "NARRATOR": "pNInz6obpgDQGcFmaJgB", // Adam: Clear, deep voice for narration
-                    "ZOMBIE JERRY": "N2lVSenRf2wimOdLGGwO", // James: A standard male voice
-                    "ZOMBIE SANDRA": "en-female", // A standard female voice
-                    "ZOMBIE MIKE": "yoZ06aMzmTo_p7_vVIJ1", // Sam: another distinct male voice
-                    "GHOST RESIDENT": "oWAxZDx7w5z9imAjNAnP" // George: A deeper voice for the ghost
+                    "NARRATOR": "en-male", // Using a standard, reliable voice
+                    "ZOMBIE JERRY": "en-male",
+                    "ZOMBIE SANDRA": "en-female",
+                    "ZOMBIE MIKE": "en-male",
+                    "GHOST RESIDENT": "en-male" // Ghosts can have a standard voice too!
                 };
                 
                 this.initializeScript();
@@ -412,7 +411,7 @@
 
                     const [imageResult, ttsResult] = await Promise.all([imagePromise, ttsPromise]);
 
-                    if (!imageResult || !ttsResult) {
+                    if (!imageResult || !imageResult.url || !ttsResult || !ttsResult.url) {
                         throw new Error("Failed to generate media.");
                     }
 
@@ -432,9 +431,6 @@
                         }
                     };
                     
-                    // Analyze the scene in the background
-                    this.analyzeSceneProgression(imageResult.url, currentScript);
-
                     this.currentScene++;
                     document.getElementById('scene-counter').textContent = this.currentScene;
 
