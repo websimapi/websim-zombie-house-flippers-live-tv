@@ -246,7 +246,7 @@
                 </div>
 
                 <div class="script-display" id="script-display">
-                    <div><strong>NARRATOR:</strong> Welcome to Zombie House Flippers! Today our undead heroes tackle a creepy Victorian mansion...</div>
+                    <div><strong>NARRATOR:</strong> Welcome to Zombie House Flippers! Today our undead heroes tackle a creepy Victorian mansion that's been abandoned for decades.</div>
                 </div>
             </div>
         </div>
@@ -257,7 +257,7 @@
         </div>
 
         <div class="controls">
-            <button class="control-btn" onclick="togglePause()">⏸️ Pause</button>
+            <button class="control-btn" id="pause-btn" onclick="togglePause()">⏸️ Pause</button>
             <button class="control-btn" onclick="skipScene()">⏭️ Skip</button>
             <button class="control-btn" onclick="restartEpisode()">🔄 Restart</button>
         </div>
@@ -273,6 +273,15 @@
                 this.currentEpisode = 1;
                 this.sceneImages = [];
                 this.conversationHistory = [];
+                this.currentAudio = null;
+                this.nextFrameTimeout = null;
+                this.voices = {
+                    "NARRATOR": "pNInz6obpgDQGcFmaJgB", // Adam: Clear, deep voice for narration
+                    "ZOMBIE JERRY": "N2lVSenRf2wimOdLGGwO", // James: A standard male voice
+                    "ZOMBIE SANDRA": "en-female", // A standard female voice
+                    "ZOMBIE MIKE": "yoZ06aMzmTo_p7_vVIJ1", // Sam: another distinct male voice
+                    "GHOST RESIDENT": "oWAxZDx7w5z9imAjNAnP" // George: A deeper voice for the ghost
+                };
                 
                 this.initializeScript();
                 this.startShow();
@@ -335,37 +344,55 @@
 
             async startShow() {
                 this.updateStatus("Starting show...");
-                await this.generateNextFrame();
-                this.scheduleNextFrame();
+                this.generateNextFrame();
             }
 
             async generateNextFrame() {
+                if (this.isPaused) return;
+
                 if (this.currentScene >= this.scriptLines.length) {
                     this.currentScene = 0; // Loop back to start
                     this.currentEpisode++;
-                    document.getElementById('episode-title').textContent = `Episode ${this.currentEpisode}: "The Haunted Victorian"`;
+                    document.getElementById('episode-title').textContent = `Episode ${this.currentEpisode}: "A New Beginning"`;
                 }
 
                 const currentScript = this.scriptLines[this.currentScene];
-                this.updateStatus("Generating frame...");
+                this.updateStatus("Generating frame & audio...");
                 this.updateScriptDisplay(currentScript);
 
                 try {
-                    // Generate image based on script and scene
                     const imagePrompt = await this.createImagePrompt(currentScript);
-                    const result = await websim.imageGen({
+                    
+                    const imagePromise = websim.imageGen({
                         prompt: imagePrompt,
                         aspect_ratio: "16:9"
                     });
+                    const ttsPromise = this.generateTTS(currentScript);
 
-                    // Store the generated image
-                    this.sceneImages[this.currentScene] = result.url;
+                    const [imageResult, ttsResult] = await Promise.all([imagePromise, ttsPromise]);
 
-                    // Create new slide
-                    await this.createSlide(result.url);
+                    if (!imageResult || !ttsResult) {
+                        throw new Error("Failed to generate media.");
+                    }
 
-                    // Analyze the generated image to determine next scene progression
-                    await this.analyzeSceneProgression(result.url, currentScript);
+                    this.sceneImages[this.currentScene] = imageResult.url;
+                    await this.createSlide(imageResult.url);
+                    
+                    this.updateStatus("Playing scene...");
+                    const audio = new Audio(ttsResult.url);
+                    this.currentAudio = audio;
+                    audio.play();
+                    
+                    audio.onended = () => {
+                        this.currentAudio = null;
+                        if (!this.isPaused) {
+                            this.updateStatus("Waiting for next scene...");
+                            this.scheduleNextFrame(1000); // 1 second pause between scenes
+                        }
+                    };
+                    
+                    // Analyze the scene in the background
+                    this.analyzeSceneProgression(imageResult.url, currentScript);
 
                     this.currentScene++;
                     document.getElementById('scene-counter').textContent = this.currentScene;
@@ -373,12 +400,27 @@
                 } catch (error) {
                     console.error('Error generating frame:', error);
                     this.updateStatus("Error generating frame, retrying...");
-                    setTimeout(() => this.generateNextFrame(), 2000);
+                    this.scheduleNextFrame(5000);
+                }
+            }
+
+            async generateTTS(scriptLine) {
+                const voice = this.voices[scriptLine.speaker] || 'en-male'; // Fallback voice
+                try {
+                    const result = await websim.textToSpeech({
+                        text: scriptLine.text,
+                        voice: voice
+                    });
+                    return result;
+                } catch (error) {
+                    console.error('Error generating TTS:', error);
+                    this.updateStatus("Error generating audio...");
+                    return null; // Allows the show to continue without audio for this line
                 }
             }
 
             async createImagePrompt(scriptLine) {
-                const basePrompt = `Zombie House Flippers TV show scene: ${scriptLine.scene}. A comedic horror TV show style, professional contractors who happen to be undead zombies, with visible but not grotesque decay (e.g., green-tinged skin, stitches).`;
+                const basePrompt = `Zombie House Flippers TV show scene: ${scriptLine.scene}. A comedic horror TV show style, professional contractors who happen to be undead zombies, with visible but not grotesque decay (e.g., green-tinged skin, stitches). High-quality, vibrant, cinematic lighting.`;
                 
                 let contextualPrompt = basePrompt;
                 
@@ -502,37 +544,62 @@
                 document.getElementById('status').textContent = status;
             }
 
-            scheduleNextFrame() {
+            scheduleNextFrame(delay) {
                 if (!this.isPaused) {
-                    // Wait 8 seconds before generating next frame
-                    setTimeout(() => {
+                    this.nextFrameTimeout = setTimeout(() => {
                         this.generateNextFrame();
-                        this.scheduleNextFrame();
-                    }, 8000);
+                    }, delay);
                 }
             }
 
             pause() {
                 this.isPaused = true;
                 this.updateStatus("Paused");
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                }
+                clearTimeout(this.nextFrameTimeout);
             }
 
             resume() {
                 this.isPaused = false;
                 this.updateStatus("Resumed");
-                this.scheduleNextFrame();
+                if (this.currentAudio && this.currentAudio.paused) {
+                    this.currentAudio.play();
+                } else if (!this.currentAudio) {
+                    // If we were paused between scenes, start the next one.
+                    this.generateNextFrame();
+                }
             }
 
             skipScene() {
-                this.currentScene++;
-                this.generateNextFrame();
+                clearTimeout(this.nextFrameTimeout);
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio = null;
+                }
+                if (this.isPaused) {
+                    this.currentScene++; // Advance scene counter even if paused
+                } else {
+                    this.generateNextFrame();
+                }
             }
 
             restart() {
+                clearTimeout(this.nextFrameTimeout);
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio = null;
+                }
                 this.currentScene = 0;
                 this.currentEpisode = 1;
                 document.getElementById('episode-title').textContent = `Episode 1: "The Haunted Victorian"`;
-                this.generateNextFrame();
+                if (this.isPaused) {
+                     this.updateScriptDisplay(this.scriptLines[0]);
+                     document.getElementById('scene-counter').textContent = 1;
+                } else {
+                    this.generateNextFrame();
+                }
             }
         }
 
@@ -544,12 +611,13 @@
 
         // Control functions
         function togglePause() {
+            const pauseBtn = document.getElementById('pause-btn');
             if (show.isPaused) {
                 show.resume();
-                document.querySelector('.control-btn').textContent = '⏸️ Pause';
+                pauseBtn.textContent = '⏸️ Pause';
             } else {
                 show.pause();
-                document.querySelector('.control-btn').textContent = '▶️ Play';
+                pauseBtn.textContent = '▶️ Play';
             }
         }
 
